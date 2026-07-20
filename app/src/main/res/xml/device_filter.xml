@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- FTDI chip FT232R, FT2232, etc. (Vendor ID = 0x0403 = 1027) -->
+    <usb-device vendor-id="1027" />
+    <!-- Prolific PL2303 (Vendor ID = 0x067b = 1659) -->
+    <usb-device vendor-id="1659" />
+    <!-- Qinheng CH340/CH341 (Vendor ID = 0x1a86 = 6790) -->
+    <usb-device vendor-id="6790" />
+    <!-- Silicon Labs CP210x (Vendor ID = 0x10c4 = 4292) -->
+    <usb-device vendor-id="4292" />
+</resources>
