@@ -55,13 +55,18 @@ Anteriormente, los técnicos en terreno debían realizar dos tareas críticas co
 
 ## 2. Manual de Instalación y Configuración del Entorno
 
-### A. Instalación de la App en el Celular Android
-1.  Conecta tu celular a la misma red Wi-Fi que la computadora principal.
-2.  Abre el navegador Chrome en tu teléfono e ingresa a la dirección de descarga:
-    👉 **`http://10.74.45.141:5000/static/jennic-flasher.apk`**
-3.  Descarga el archivo. Si Android muestra una advertencia de "Archivo dañino", confirma la descarga (es una advertencia estándar para aplicaciones que no se descargan de la Play Store).
-4.  Abre el archivo descargado e instálalo. Si te pide habilitar "Instalar aplicaciones de fuentes desconocidas" para Chrome, acéptalo.
-5.  ¡Listo! El icono de **JennicLink Pro** aparecerá en tu menú de aplicaciones.
+### A. Instalación de la App en el Celular Android (Descarga desde GitHub)
+1. **Autorización previa**: Como el repositorio es **Privado**, debes solicitar al administrador del proyecto (`Kmazu`) que agregue tu correo electrónico o nombre de usuario de GitHub en `Settings -> Collaborators`.
+2. **Aceptación de la invitación**: Revisa tu correo o tus notificaciones en GitHub y acepta la invitación enviada para acceder al repositorio `Kmazu/jenniclink-pro`.
+3. **Descarga del archivo instalable (.apk)**:
+   * Abre el navegador Chrome en tu teléfono e ingresa al repositorio oficial:
+     👉 **`https://github.com/Kmazu/jenniclink-pro`**
+   * O utiliza el enlace directo de descarga del ejecutable (exclusivo para usuarios autorizados):
+     👉 **`https://github.com/Kmazu/jenniclink-pro/raw/main/jennic-flasher.apk`**
+4. **Instalación**:
+   * Abre el archivo `jennic-flasher.apk` desde la notificación o la carpeta de **Descargas**.
+   * Si Android muestra una advertencia de "Permitir instalar aplicaciones de fuentes desconocidas", presiona **Permitir**.
+5. **Listo**: El icono de **JennicLink Pro** aparecerá en tu menú de aplicaciones listo para trabajar.
 
 ---
 
