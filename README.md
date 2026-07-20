@@ -59,10 +59,10 @@ Anteriormente, los técnicos en terreno debían realizar dos tareas críticas co
 1. **Autorización previa**: Como el repositorio es **Privado**, debes solicitar al administrador del proyecto (`Kmazu`) que agregue tu correo electrónico o nombre de usuario de GitHub en `Settings -> Collaborators`.
 2. **Aceptación de la invitación**: Revisa tu correo o tus notificaciones en GitHub y acepta la invitación enviada para acceder al repositorio `Kmazu/jenniclink-pro`.
 3. **Descarga del archivo instalable (.apk)**:
-   * Abre el navegador Chrome en tu teléfono e ingresa al repositorio oficial:
-     👉 **`https://github.com/Kmazu/jenniclink-pro`**
-   * O utiliza el enlace directo de descarga del ejecutable (exclusivo para usuarios autorizados):
-     👉 **`https://github.com/Kmazu/jenniclink-pro/raw/main/jennic-flasher.apk`**
+   * Abre el navegador Chrome en tu teléfono e ingresa a la página oficial de publicaciones (Releases):
+     👉 **`https://github.com/Kmazu/jenniclink-pro/releases/tag/v1.0.0`**
+   * O toca directamente el enlace de descarga del APK comercial:
+     👉 **`https://github.com/Kmazu/jenniclink-pro/releases/download/v1.0.0/jennic-flasher.apk`**
 4. **Instalación**:
    * Abre el archivo `jennic-flasher.apk` desde la notificación o la carpeta de **Descargas**.
    * Si Android muestra una advertencia de "Permitir instalar aplicaciones de fuentes desconocidas", presiona **Permitir**.
