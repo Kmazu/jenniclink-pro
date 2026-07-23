@@ -1,6 +1,6 @@
 # Documentación Completa del Proyecto: JennicLink Pro v1.0.0
 
-Este documento contiene la recopilación técnica y comercial completa del desarrollo de **JennicLink Pro**. Está redactado de forma detallada y estructurada para que pueda ser cargado directamente en de Forget.
+Este documento contiene la recopilación técnica y comercial completa del desarrollo de **JennicLink Pro**. Está redactado de forma detallada y estructurada para que pueda ser cargado directamente en de Forge.
 ---
 
 ## 1. Redacción del Proyecto e Historial de Trabajo
