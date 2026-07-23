@@ -54,14 +54,13 @@ Anteriormente, los técnicos en terreno debían realizar dos tareas críticas co
 
 ## 2. Manual de Instalación y Configuración del Entorno
 
-### A. Instalación de la App en el Celular Android (Descarga desde GitHub)
-1. **Autorización previa**: Como el repositorio es **Privado**, debes solicitar al administrador del proyecto (`Kmazu`) que agregue tu correo electrónico o nombre de usuario de GitHub en `Settings -> Collaborators`.
-2. **Aceptación de la invitación**: Revisa tu correo o tus notificaciones en GitHub y acepta la invitación enviada para acceder al repositorio `Kmazu/jenniclink-pro`.
-3. **Descarga del archivo instalable (.apk)**:
+### A. Instalación de la App en el Celular Android forge
+
+1.  **Descarga del archivo instalable (.apk)**:
    * Abre el navegador Chrome en tu teléfono e ingresa a la página oficial de publicaciones (Releases):
-     👉 **`https://github.com/Kmazu/jenniclink-pro/releases/tag/v1.0.0`**
-   * O toca directamente el enlace de descarga del APK comercial:
-     👉 **`https://github.com/Kmazu/jenniclink-pro/releases/download/v1.0.0/jennic-flasher.apk`**
+     👉 **`https://intranet.innovex.cl/`**
+   * Ingresa al apartado donde dice Forge, o dirijete directo a este link 
+     👉 **`https://forge.innovex.cl/glenn.montiel/jenniclink-pro`**
 4. **Instalación**:
    * Abre el archivo `jennic-flasher.apk` desde la notificación o la carpeta de **Descargas**.
    * Si Android muestra una advertencia de "Permitir instalar aplicaciones de fuentes desconocidas", presiona **Permitir**.
@@ -94,19 +93,6 @@ Para que el celular pueda ingresar a la computadora y escanear los firmwares por
         sudo systemctl restart ssh
         ```
 
----
-
-### C. Uso alternativo con el Servidor Autónomo (`simple_server.py`)
-Si alguna vez vas a sincronizar firmwares desde otra computadora que no sea tuya (por ejemplo, la de un cliente o compañero que no tenga SSH instalado), puedes usar el script ligero de Python:
-
-1.  Descarga el script en esa computadora desde:
-    👉 **`http://10.74.45.141:5000/static/simple_server.py`**
-2.  Coloca los archivos de firmware `.bin` en la carpeta **Descargas** de esa computadora.
-3.  Abre una terminal en la carpeta donde descargaste el script y ejecútalo con:
-    ```bash
-    python3 simple_server.py
-    ```
-4.  Desactiva la opción de SSH en el celular, ingresa la IP de esa PC y presiona "Sinc".
 
 ---
 
