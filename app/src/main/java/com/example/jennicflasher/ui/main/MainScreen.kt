@@ -107,11 +107,13 @@ fun MainScreen(
             ) {
                 Tab(
                     selected = uiState.currentTab == 0,
+                    enabled = uiState.status != FlashingStatus.FLASHING,
                     onClick = { viewModel.selectTab(0) },
                     text = { Text("Grabador (Flasher)", fontWeight = FontWeight.Bold) }
                 )
                 Tab(
                     selected = uiState.currentTab == 1,
+                    enabled = uiState.status != FlashingStatus.FLASHING,
                     onClick = { viewModel.selectTab(1) },
                     text = { Text("Consola Serial (115.2k)", fontWeight = FontWeight.Bold) }
                 )
@@ -390,7 +392,8 @@ fun FlasherLayout(
                 Spacer(modifier = Modifier.height(20.dp))
                 val isActionEnabled = uiState.selectedUsbDevice != null && 
                                       uiState.selectedLocalFirmware != null && 
-                                      uiState.status != FlashingStatus.FLASHING
+                                      uiState.status != FlashingStatus.FLASHING &&
+                                      !uiState.terminalConnected
                 
                 Button(
                     onClick = { viewModel.startFlashing(context) },
@@ -411,6 +414,17 @@ fun FlasherLayout(
                             fontSize = 16.sp
                         )
                     }
+                }
+
+                if (uiState.terminalConnected) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "⚠️ Desconecte la consola serial antes de grabar firmware",
+                        color = Color(0xFFF59E0B),
+                        fontSize = 12.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             }
         }
@@ -576,9 +590,11 @@ fun ConsoleLayout(
                         viewModel.connectTerminal(context)
                     }
                 },
+                enabled = uiState.status != FlashingStatus.FLASHING,
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (uiState.terminalConnected) Color(0xFFEF4444) else Color(0xFF6366F1)
+                    containerColor = if (uiState.terminalConnected) Color(0xFFEF4444) else Color(0xFF6366F1),
+                    disabledContainerColor = Color(0x33FFFFFF)
                 ),
                 modifier = Modifier.fillMaxWidth().height(48.dp)
             ) {
