@@ -3,8 +3,7 @@
 
 -keep class com.hoho.android.usbserial.driver.** { *; }
 -keep interface com.hoho.android.usbserial.driver.** { *; }
--keep class com.example.jennicflasher.data.** { *; }
--keep class com.example.jennicflasher.ui.** { *; }
+
 -keep class com.jcraft.jsch.** { *; }
 -keep interface com.jcraft.jsch.** { *; }
 
