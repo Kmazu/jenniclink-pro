@@ -66,6 +66,70 @@ data class FlasherUiState(
     val sftpFolderPath: String = "/home/innovex"
 )
 
+fun extractVersion(filename: String): String {
+    val cleanName = filename.substringBeforeLast(".")
+    
+    // Match _vX.Y.Z or _vX.Y or _vX
+    val vRegex = Regex("""_v(\d+(?:\.\d+)*)""", RegexOption.IGNORE_CASE)
+    val vMatch = vRegex.find(cleanName)
+    if (vMatch != null) {
+        return "v" + vMatch.groupValues[1]
+    }
+
+    // Match _rXXXX (e.g., _r984)
+    val rRegex = Regex("""_r(\d+)""", RegexOption.IGNORE_CASE)
+    val rMatch = rRegex.find(cleanName)
+    if (rMatch != null) {
+        return "r" + rMatch.groupValues[1]
+    }
+
+    // Match _1068_427
+    val numRegex = Regex("""_(\d+_\d+)""")
+    val numMatch = numRegex.find(cleanName)
+    if (numMatch != null) {
+        return numMatch.groupValues[1]
+    }
+
+    return "Otros"
+}
+
+val versionComparator = Comparator<String> { v1, v2 ->
+    if (v1 == v2) return@Comparator 0
+    if (v1 == "Otros") return@Comparator 1
+    if (v2 == "Otros") return@Comparator -1
+
+    val isV1 = v1.startsWith("v", ignoreCase = true)
+    val isV2 = v2.startsWith("v", ignoreCase = true)
+    val isR1 = v1.startsWith("r", ignoreCase = true)
+    val isR2 = v2.startsWith("r", ignoreCase = true)
+
+    if (isV1 && isV2) {
+        val parts1 = v1.drop(1).split(".").mapNotNull { it.toIntOrNull() }
+        val parts2 = v2.drop(1).split(".").mapNotNull { it.toIntOrNull() }
+        val maxLen = maxOf(parts1.size, parts2.size)
+        for (i in 0 until maxLen) {
+            val p1 = parts1.getOrElse(i) { 0 }
+            val p2 = parts2.getOrElse(i) { 0 }
+            if (p1 != p2) {
+                return@Comparator p2.compareTo(p1) // Descending
+            }
+        }
+        return@Comparator v2.compareTo(v1)
+    }
+    if (isV1) return@Comparator -1
+    if (isV2) return@Comparator 1
+
+    if (isR1 && isR2) {
+        val r1 = v1.drop(1).toIntOrNull() ?: 0
+        val r2 = v2.drop(1).toIntOrNull() ?: 0
+        return@Comparator r2.compareTo(r1) // Descending
+    }
+    if (isR1) return@Comparator -1
+    if (isR2) return@Comparator 1
+
+    v2.compareTo(v1)
+}
+
 class MainScreenViewModel(private val repository: DataRepository) : ViewModel() {
 
     private val _uiState = MutableStateFlow(FlasherUiState())
@@ -118,10 +182,11 @@ class MainScreenViewModel(private val repository: DataRepository) : ViewModel() 
     fun refreshLocalFirmwares(context: Context) {
         viewModelScope.launch {
             val localList = repository.getLocalFirmwares(context)
+            val sortedList = localList.sortedWith(compareBy<LocalFirmware, String>(versionComparator) { extractVersion(it.name) }.thenBy { it.name })
             _uiState.update {
                 it.copy(
-                    localFirmwares = localList,
-                    selectedLocalFirmware = localList.firstOrNull() ?: it.selectedLocalFirmware
+                    localFirmwares = sortedList,
+                    selectedLocalFirmware = sortedList.firstOrNull() ?: it.selectedLocalFirmware
                 )
             }
         }
@@ -160,7 +225,7 @@ class MainScreenViewModel(private val repository: DataRepository) : ViewModel() 
 
                 if (remoteList.isEmpty()) {
                     _uiState.update { 
-                        it.copy(
+                      it.copy(
                             status = FlashingStatus.IDLE,
                             syncErrorMessage = if (state.useSftp) {
                                 "Conectado con éxito a $ip, pero no se encontraron archivos .bin en la ruta especificada."
@@ -170,9 +235,10 @@ class MainScreenViewModel(private val repository: DataRepository) : ViewModel() 
                         )
                     }
                 } else {
+                    val sortedRemoteList = remoteList.sortedWith(compareBy<PcFirmware, String>(versionComparator) { extractVersion(it.name) }.thenBy { it.name })
                     _uiState.update {
                         it.copy(
-                            remoteFirmwares = remoteList,
+                            remoteFirmwares = sortedRemoteList,
                             status = FlashingStatus.IDLE
                         )
                     }

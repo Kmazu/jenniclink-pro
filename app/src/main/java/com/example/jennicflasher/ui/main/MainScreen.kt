@@ -354,17 +354,36 @@ fun FlasherLayout(
                     onDismissRequest = { expanded = false },
                     modifier = Modifier.fillMaxWidth(0.9f).background(Color(0xFF1E1F29))
                 ) {
+                    var lastVersion = ""
                     uiState.localFirmwares.forEach { firmware ->
+                        val currentVersion = extractVersion(firmware.name)
+                        if (currentVersion != lastVersion) {
+                            if (lastVersion.isNotEmpty()) {
+                                HorizontalDivider(
+                                    color = Color(0x26FFFFFF),
+                                    thickness = 1.dp,
+                                    modifier = Modifier.padding(vertical = 4.dp)
+                                )
+                            }
+                            Text(
+                                text = if (currentVersion.startsWith("r")) "📌 Revisión $currentVersion" else if (currentVersion == "Otros") "📌 Otros (Sin versión)" else "📌 Versión $currentVersion",
+                                color = Color(0xFF22D3EE),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+                            )
+                            lastVersion = currentVersion
+                        }
                         DropdownMenuItem(
-                            text = { Text("${firmware.name} (${firmware.sizeStr})", color = Color.White) },
+                            text = { Text(firmware.name, color = Color.White, fontSize = 13.sp) },
                             onClick = {
                                 viewModel.selectLocalFirmware(firmware)
-                                    expanded = false
-                                }
-                            )
-                        }
+                                expanded = false
+                            }
+                        )
                     }
                 }
+            }
 
                 Spacer(modifier = Modifier.height(14.dp))
 
