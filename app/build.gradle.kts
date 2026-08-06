@@ -8,7 +8,7 @@ android {
     namespace = "com.example.jennicflasher"
     compileSdk = 36
     defaultConfig {
-        applicationId = "com.example.jennicflasher"
+        applicationId = "com.innovex.jennicflasher"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
