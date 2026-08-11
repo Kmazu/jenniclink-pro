@@ -1,6 +1,11 @@
 # Documentación Completa del Proyecto: JennicLink Pro v1.1.0
 
 Este documento contiene la recopilación técnica e institucional completa del desarrollo de **JennicLink Pro** en su **Versión 1.1.0**, integrada oficialmente para uso en terreno de la empresa **Innovex** (autoría y propiedad de Glenn Montiel). Está redactado de forma detallada y estructurada para que pueda ser cargado directamente en Forge y GitHub.
+
+### 📚 Índice de Versiones y Documentación de Releases
+* 🚀 **[Release Actual v1.1.0 - Documentación de Actualización](README_RELEASE_v1.1.0.md)** (Tag Git `v1.1.0`)
+* 📌 **[Release Histórico v1.0.0 - Documentación Original](README_v1.0.0.md)** (Tag Git `v1.0.0`)
+* 📑 **[Notas del Lanzamiento v1.1.0](RELEASE_NOTES_v1.1.md)**
 ---
 
 ## 1. Redacción del Proyecto e Historial de Trabajo
