@@ -17,6 +17,48 @@ import com.jcraft.jsch.ChannelSftp
 import com.jcraft.jsch.JSch
 import com.jcraft.jsch.Session
 
+import android.os.Environment
+
+fun extractVersionTag(fileName: String): String {
+    val lower = fileName.lowercase()
+    return when {
+        lower.contains("v2.0.2") || lower.contains("2.0.2") -> "v2.0.2"
+        lower.contains("v2.0.1") || lower.contains("2.0.1") -> "v2.0.1"
+        lower.contains("v2.0.0") || lower.contains("2.0.0") -> "v2.0.0"
+        lower.contains("1068") || lower.contains("r1068") || lower.contains("r1058") -> "r1068"
+        lower.contains("r984") -> "r984"
+        else -> {
+            val regex = Regex("v?\\d+\\.\\d+(\\.\\d+)?", RegexOption.IGNORE_CASE)
+            val match = regex.find(fileName)
+            if (match != null) {
+                val tag = match.value
+                if (tag.startsWith("v", ignoreCase = true)) tag else "v$tag"
+            } else {
+                "Sin versión"
+            }
+        }
+    }
+}
+
+fun extractVersionWeight(versionTag: String): Int {
+    val lower = versionTag.lowercase()
+    return when {
+        lower.contains("2.0.2") -> 20020
+        lower.contains("2.0.1") -> 20010
+        lower.contains("2.0.0") -> 20000
+        lower.contains("1068") -> 10680
+        lower.contains("984") -> 9840
+        lower.startsWith("v") -> {
+            val nums = lower.removePrefix("v").split(".")
+            val major = nums.getOrNull(0)?.toIntOrNull() ?: 0
+            val minor = nums.getOrNull(1)?.toIntOrNull() ?: 0
+            val patch = nums.getOrNull(2)?.toIntOrNull() ?: 0
+            major * 10000 + minor * 100 + patch
+        }
+        else -> 0
+    }
+}
+
 data class PcFirmware(
     val name: String,
     val path: String,
@@ -27,7 +69,9 @@ data class PcFirmware(
 data class LocalFirmware(
     val name: String,
     val file: File,
-    val sizeStr: String
+    val sizeStr: String,
+    val versionTag: String = extractVersionTag(name),
+    val versionWeight: Int = extractVersionWeight(extractVersionTag(name))
 )
 
 data class UsbDeviceItem(
@@ -39,6 +83,7 @@ interface DataRepository {
     val data: Flow<List<String>> // Compatibility with template
     fun scanUsbDevices(context: Context): List<UsbDeviceItem>
     fun getLocalFirmwares(context: Context): List<LocalFirmware>
+    suspend fun scanPhoneStorageForFirmwares(context: Context): Int
     suspend fun fetchRemoteFirmwares(pcIp: String): List<PcFirmware>
     suspend fun downloadRemoteFirmware(context: Context, pcIp: String, pcFirmware: PcFirmware): File
     suspend fun fetchRemoteFirmwaresSftp(ip: String, user: String, pass: String, remotePath: String): List<PcFirmware>
@@ -79,7 +124,51 @@ class DefaultDataRepository : DataRepository {
                 String.format("%.1f KB", size.toDouble() / 1024)
             }
             LocalFirmware(file.name, file, sizeStr)
-        }.sortedByDescending { it.file.lastModified() }
+        }.sortedWith(
+            compareByDescending<LocalFirmware> { it.versionWeight }
+                .thenByDescending { it.file.lastModified() }
+        )
+    }
+
+    override suspend fun scanPhoneStorageForFirmwares(context: Context): Int = withContext(Dispatchers.IO) {
+        var importedCount = 0
+        val targetDir = context.filesDir
+        val candidateFolders = listOfNotNull(
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
+            File("/sdcard/Download"),
+            File("/sdcard/Documents"),
+            File("/storage/emulated/0/Download"),
+            File("/storage/emulated/0/Documents"),
+            File("/storage/emulated/0/WhatsApp/Media/WhatsApp Documents"),
+            File("/storage/emulated/0/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Documents"),
+            context.getExternalFilesDir(null)
+        )
+
+        val seenFiles = mutableSetOf<String>()
+
+        for (folder in candidateFolders) {
+            if (folder.exists() && folder.isDirectory) {
+                folder.walkTopDown()
+                    .maxDepth(3)
+                    .filter { file -> file.isFile && file.name.endsWith(".bin", ignoreCase = true) }
+                    .forEach { sourceFile ->
+                        if (!seenFiles.contains(sourceFile.name)) {
+                            seenFiles.add(sourceFile.name)
+                            val destFile = File(targetDir, sourceFile.name)
+                            if (!destFile.exists() || destFile.length() != sourceFile.length()) {
+                                try {
+                                    sourceFile.copyTo(destFile, overwrite = true)
+                                    importedCount++
+                                } catch (e: Exception) {
+                                    android.util.Log.e("DataRepository", "Error al copiar ${sourceFile.name}", e)
+                                }
+                            }
+                        }
+                    }
+            }
+        }
+        importedCount
     }
 
     override suspend fun fetchRemoteFirmwares(pcIp: String): List<PcFirmware> = withContext(Dispatchers.IO) {
