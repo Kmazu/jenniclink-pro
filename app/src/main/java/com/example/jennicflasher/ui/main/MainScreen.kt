@@ -1,7 +1,17 @@
 package com.example.jennicflasher.ui.main
 
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
+import android.os.Environment
+import android.provider.Settings
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
+import androidx.core.content.ContextCompat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -156,6 +166,20 @@ fun FlasherLayout(
     viewModel: MainScreenViewModel,
     context: android.content.Context
 ) {
+    val filePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: android.net.Uri? ->
+        if (uri != null) {
+            viewModel.importFirmwareFromUri(context, uri)
+        }
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { _ ->
+        viewModel.scanPhoneStorage(context)
+    }
+
     // Section 1: PC Connection & Synchronization
     Card(
         modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
@@ -341,12 +365,105 @@ fun FlasherLayout(
 
             Spacer(modifier = Modifier.height(14.dp))
 
+            // Phone Storage Scan & Import Header & Buttons
+            Text(
+                text = "Firmware Local (.bin):",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                modifier = Modifier.padding(bottom = 6.dp)
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Button(
+                    onClick = {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                            if (Environment.isExternalStorageManager()) {
+                                viewModel.scanPhoneStorage(context)
+                            } else {
+                                Toast.makeText(context, "Por favor habilita el permiso 'Acceso a todos los archivos' para escanear firmwares", Toast.LENGTH_LONG).show()
+                                try {
+                                    val intent = Intent(
+                                        Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+                                        Uri.parse("package:${context.packageName}")
+                                    )
+                                    context.startActivity(intent)
+                                } catch (e: Exception) {
+                                    val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+                                    context.startActivity(intent)
+                                }
+                            }
+                        } else {
+                            val hasPerm = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
+                            if (!hasPerm) {
+                                permissionLauncher.launch(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE))
+                            } else {
+                                viewModel.scanPhoneStorage(context)
+                            }
+                        }
+                    },
+                    enabled = !uiState.isScanningStorage,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6366F1)),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.weight(1f).height(42.dp),
+                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        if (uiState.isScanningStorage) {
+                            CircularProgressIndicator(modifier = Modifier.size(14.dp), color = Color.White, strokeWidth = 2.dp)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Buscando...", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                        } else {
+                            Text("🔍 Auto-Escanear", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                }
+
+                Button(
+                    onClick = { filePickerLauncher.launch("*/*") },
+                    enabled = !uiState.isScanningStorage,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.weight(1f).height(42.dp),
+                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Text("📁 Seleccionar .bin", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+            }
+
+            if (uiState.scanFeedbackMessage != null) {
+                Surface(
+                    color = Color(0x336366F1),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                ) {
+                    Text(
+                        text = uiState.scanFeedbackMessage!!,
+                        color = Color(0xFFA5B4FC),
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(8.dp)
+                    )
+                }
+            }
+
             // Local Firmware Dropdown
             Box(modifier = Modifier.fillMaxWidth()) {
                 var expanded by remember { mutableStateOf(false) }
                 OutlinedBox(
-                    label = "Firmware local (.bin)",
-                    value = uiState.selectedLocalFirmware?.name ?: "Sincroniza y descarga un firmware",
+                    label = "Seleccionar Firmware",
+                    value = uiState.selectedLocalFirmware?.name ?: "Escanea, selecciona o sincroniza un firmware",
                     onClick = { expanded = true }
                 )
                 DropdownMenu(
@@ -786,12 +903,13 @@ fun ConsoleLayout(
                 Spacer(modifier = Modifier.height(6.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    QuickCmdBtn("status", enabled = uiState.terminalConnected) { viewModel.sendTerminalCommand("status") }
-                    QuickCmdBtn("motes", enabled = uiState.terminalConnected) { viewModel.sendTerminalCommand("motes") }
-                    QuickCmdBtn("stats", enabled = uiState.terminalConnected) { viewModel.sendTerminalCommand("statistics") }
-                    QuickCmdBtn("reboot", enabled = uiState.terminalConnected) { viewModel.sendTerminalCommand("reboot") }
+                    QuickCmdBtn("status", enabled = uiState.terminalConnected, modifier = Modifier.weight(1f)) { viewModel.sendTerminalCommand("status") }
+                    QuickCmdBtn("motes", enabled = uiState.terminalConnected, modifier = Modifier.weight(1f)) { viewModel.sendTerminalCommand("motes") }
+                    QuickCmdBtn("stats", enabled = uiState.terminalConnected, modifier = Modifier.weight(1f)) { viewModel.sendTerminalCommand("statistics") }
+                    QuickCmdBtn("sleep", enabled = uiState.terminalConnected, modifier = Modifier.weight(1f)) { viewModel.sendTerminalCommand("sleep") }
+                    QuickCmdBtn("reboot", enabled = uiState.terminalConnected, modifier = Modifier.weight(1f)) { viewModel.sendTerminalCommand("reboot") }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -807,12 +925,13 @@ fun ConsoleLayout(
             Spacer(modifier = Modifier.height(6.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                QuickCmdBtn("status", enabled = uiState.terminalConnected) { viewModel.sendTerminalCommand("${cmdPrefix}status") }
-                QuickCmdBtn("config", enabled = uiState.terminalConnected) { viewModel.sendTerminalCommand("${cmdPrefix}config") }
-                QuickCmdBtn("commit", enabled = uiState.terminalConnected) { viewModel.sendTerminalCommand("${cmdPrefix}commit") }
-                QuickCmdBtn("reboot", enabled = uiState.terminalConnected) { viewModel.sendTerminalCommand("${cmdPrefix}reboot") }
+                QuickCmdBtn("status", enabled = uiState.terminalConnected, modifier = Modifier.weight(1f)) { viewModel.sendTerminalCommand("${cmdPrefix}status") }
+                QuickCmdBtn("config", enabled = uiState.terminalConnected, modifier = Modifier.weight(1f)) { viewModel.sendTerminalCommand("${cmdPrefix}config") }
+                QuickCmdBtn("commit", enabled = uiState.terminalConnected, modifier = Modifier.weight(1f)) { viewModel.sendTerminalCommand("${cmdPrefix}commit") }
+                QuickCmdBtn("sleep", enabled = uiState.terminalConnected, modifier = Modifier.weight(1f)) { viewModel.sendTerminalCommand("${cmdPrefix}sleep") }
+                QuickCmdBtn("reboot", enabled = uiState.terminalConnected, modifier = Modifier.weight(1f)) { viewModel.sendTerminalCommand("${cmdPrefix}reboot") }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -1053,20 +1172,19 @@ fun ConfigRow(
 fun QuickCmdBtn(
     text: String,
     enabled: Boolean,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     Button(
         onClick = onClick,
         enabled = enabled,
-        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+        contentPadding = PaddingValues(horizontal = 2.dp, vertical = 2.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = Color(0xFF6366F1),
             disabledContainerColor = Color(0x1AFFFFFF)
         ),
         shape = RoundedCornerShape(8.dp),
-        modifier = Modifier
-            .width(72.dp)
-            .height(32.dp)
+        modifier = modifier.height(34.dp)
     ) {
         Text(text, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = if (enabled) Color.White else Color.Gray)
     }

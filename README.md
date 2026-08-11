@@ -1,6 +1,6 @@
-# Documentación Completa del Proyecto: JennicLink Pro v1.0.0
+# Documentación Completa del Proyecto: JennicLink Pro v1.1.0
 
-Este documento contiene la recopilación técnica y comercial completa del desarrollo de **JennicLink Pro**. Está redactado de forma detallada y estructurada para que pueda ser cargado directamente en de Forge.
+Este documento contiene la recopilación técnica e institucional completa del desarrollo de **JennicLink Pro** en su **Versión 1.1.0**, integrada oficialmente para uso en terreno de la empresa **Innovex** (autoría y propiedad de Glenn Montiel). Está redactado de forma detallada y estructurada para que pueda ser cargado directamente en Forge y GitHub.
 ---
 
 ## 1. Redacción del Proyecto e Historial de Trabajo
@@ -11,7 +11,7 @@ Anteriormente, los técnicos en terreno debían realizar dos tareas críticas co
 1.  **Flasheo de Firmware**: Requería una laptop en terreno conectada por cable serial para correr scripts de Python o programas de consola (como `jn516xprog`).
 2.  **Configuración de Consola**: Requiere cambiar parámetros locales o remotos (a través de una antena centralizadora "Pancoordinator") usando programas de terminal serial a 115200 baudios, enviando comandos manuales de texto.
 
-**El objetivo del proyecto** fue centralizar y simplificar estas operaciones en una aplicación móvil Android de calidad comercial, protegida contra la ingeniería inversa, que permitiera realizar flasheo OTG local y control serial intuitivo con un solo toque.
+**El objetivo del proyecto** fue centralizar y simplificar estas operaciones en una aplicación móvil Android de nivel corporativo para **Innovex**, protegida contra la ingeniería inversa, que permitiera realizar flasheo OTG local y control serial intuitivo con un solo toque.
 
 ---
 
@@ -34,7 +34,7 @@ Anteriormente, los técnicos en terreno debían realizar dos tareas críticas co
 
 #### Hito 4: Re-branding y Comercialización de la App (Protección Anti-Copia)
 *   Se renombró oficialmente la aplicación a **JennicLink Pro**.
-*   Se agregó la firma de autoría estática en el pie de página: `"JennicLink Pro v1.0.0 — Desarrollado por Glenn M."`.
+*   Se agregó la firma de autoría estática en el pie de página: `"JennicLink Pro v1.1.0 — Desarrollado por Glenn M."`.
 *   Se generó un logotipo industrial de alta resolución para el icono de lanzamiento de la aplicación.
 *   Se configuró el compilador Gradle para compilar en modo **Release** con **R8 / ProGuard** activado. Todo el código de comunicación OTG, base de datos y diseño UI se ofusca (renombrando variables y funciones a letras aleatorias como `a.b.c()`), protegiendo la propiedad intelectual de Glenn M. frente a descompilaciones y plagios.
 
@@ -45,10 +45,20 @@ Anteriormente, los técnicos en terreno debían realizar dos tareas críticas co
 
 #### Hito 6: Comando de Ajuste Rápido de Cable del Sensor
 *   Se agregó la fila de configuración de largo de cable del sensor con tres opciones fijas: **5 metros, 10 metros y 15 metros**.
-*   Para evitar errores de desalineación (donde los sensores COND y OXY envían datos desajustados por tener largos de cable distintos configurados en sus microchips), el botón realiza de forma automatizada la siguiente secuencia:
-    1.  Envía `spower` (enciende los sensores).
-    2.  Envía `tunnel SENS1 cable <largo>` (configura el sensor de oxígeno).
-    3.  Envía `tunnel SENS2 cable <largo>` (configura el sensor de salinidad).
+*   Para evitar errores de desalineación (donde los sensores COND y OXY envían datos desajustados por tener largos de cable distintos configurados en sus microchips), el botón realiza de forma automatizada la secuencia `spower` -> `tunnel SENS1 cable <largo>` -> `tunnel SENS2 cable <largo>`.
+
+#### Hito 7: Novedades de la Versión 1.1 (Desglose por Versión y Escaneo en Celular)
+*   **Desglose y Ordenamiento de Firmwares de Mayor a Menor**:
+    * Se desarrolló un parser inteligente (`extractVersionTag` y `extractVersionWeight`) que extrae la etiqueta de versión de cualquier archivo `.bin` y calcula su peso numérico.
+    * La lista desplegable agrupa y ordena automáticamente los firmwares en secciones visuales divididas desde la más reciente a la más antigua:
+      * `v2.0.2` -> `v2.0.1` -> `v2.0.0` -> `r1068` -> `r984` -> `Sin versión / Otros`.
+*   **Escaneo Inteligente de Almacenamiento Local (Auto-Escanear)**:
+    * Se implementó un motor de escaneo de memoria interna en `DataRepository` que consulta la API `MediaStore.Files` y recorre directorios públicos (`/sdcard/Download`, `Documents`, `WhatsApp Documents`, `Telegram`).
+    * Para superar las restricciones de **Scoped Storage en Android 11+**, al presionar **`🔍 Auto-Escanear`**, la aplicación redirige de forma nativa a la pantalla de Ajustes del sistema (`MANAGE_EXTERNAL_STORAGE`) permitiendo activar el permiso *"Acceso a todos los archivos"*.
+*   **Selector Nativo Directo (`📁 Seleccionar .bin`)**:
+    * Se añadió un botón de importación directa mediante el sistema **Storage Access Framework (SAF)** de Android. Al tocarlo, abre el explorador de archivos nativo permitiendo al usuario seleccionar cualquier archivo `.bin` guardado en el teléfono e incorporarlo al instante.
+*   **Rediseño de Interfaz Simétrica**:
+    * Se rediseñó la sección de firmware local con una distribución limpia y botones alineados proporcionalmente.
 
 ---
 
@@ -126,7 +136,8 @@ Esta pestaña se utiliza para realizar diagnósticos, enviar comandos manuales y
     *   **Marcar** *"Cable conectado directo al Nodo"* si tienes el teléfono cableado directamente a la placa del nodo Jennic.
     *   **Desmarcar** si estás conectado a través de la **Antena (Pancoordinator)**. Esto requiere indicar el número de **Mote ID (Nodo)** al que deseas enviar las señales por radio.
 *   **Botones de Comandos Rápidos**:
-    *   `status`, `config`, `commit`, `reboot`: Realizan acciones rápidas sobre la antena o nodo sin escribir.
+    *   **Comandos de Antena (Pancoordinator)**: `status`, `motes`, `stats`, `sleep`, `reboot` (envían comandos locales directos a la antena centralizadora).
+    *   **Comandos del Nodo Jennic**: `status`, `config`, `commit`, `sleep`, `reboot` (envían los comandos al nodo seleccionado utilizando el prefijo `cmd [mote_id]` por radio o directo).
 *   **Configuración Avanzada (Un solo toque)**:
     *   **Nombre / PAN-ID / Muestreo / Contraste**: Escribe el valor deseado y presiona su botón correspondiente para enviarlo y guardarlo.
     *   **Inyección Oxígeno**: Permite ajustar los niveles de oxígeno de apertura y corte, así como activar los modos de inyección (`Auto`, `On`, `Off`).

@@ -1,6 +1,6 @@
-# Especificación Técnica e Historial de Arquitectura: JennicLink Pro
+# Especificación Técnica e Historial de Arquitectura: JennicLink Pro v1.1
 
-Este documento recopila la ficha técnica completa del software, las tecnologías utilizadas, dependencias, diseño de arquitectura y su evolución histórica en el proyecto **JennicLink Pro**.
+Este documento recopila la ficha técnica completa del software, las tecnologías utilizadas, dependencias, diseño de arquitectura y su evolución histórica en el proyecto **JennicLink Pro (Versión 1.1)**.
 
 ---
 
@@ -15,6 +15,7 @@ Este documento recopila la ficha técnica completa del software, las tecnología
 | **Seguridad de Código** | Ofuscación y optimización nativa con R8 / ProGuard |
 | **Protocolo de Comunicación** | UART/Serial mediante USB Host OTG (115200 / 38400 baudios) |
 | **Protocolo de Sincronización** | SSH / SFTP (Puerto 22) y HTTP (Puerto 5000) |
+| **Permisos de Almacenamiento** | `MANAGE_EXTERNAL_STORAGE` (Acceso a todos los archivos en Android 11+) y `READ_EXTERNAL_STORAGE` |
 | **Hardware Destinatario** | Microcontroladores NXP Jennic JN5168 y JN5169 |
 
 ---
@@ -63,6 +64,8 @@ graph TD
     C --> D[Cifrado y Ofuscación R8 ProGuard]
     D --> E[Integración SFTP Nativa JSch]
     E --> F[Macro-Comandos de Sensores: spower + tunnel]
+    F --> G[v1.1: Desglose por Versión de Mayor a Menor]
+    G --> H[v1.1: Escáner Híbrido MediaStore + SAF + MANAGE_EXTERNAL_STORAGE]
 ```
 
 ### Paso 1: Motor del Bootloader Jennic
@@ -98,3 +101,15 @@ Para la asignación del largo de cable de los sensores, se programó un despacha
 1. `spower` (Enciende el bus de energía de los sensores).
 2. `tunnel SENS1 cable <largo>` (Configura el parámetro de cable en metros del sensor óptico de oxígeno).
 3. `tunnel SENS2 cable <largo>` (Configura el parámetro de cable en metros del sensor de conductividad/salinidad).
+
+### Paso 6: Algoritmo de Extracción y Ponderación de Versiones (v1.1)
+Se añadió un sistema de parsing y ordenamiento estricto en `DataRepository.kt`:
+* `extractVersionTag(fileName: String)`: Detecta patrones como `v2.0.2`, `v2.0.1`, `v2.0.0`, `r1068`, `r984`.
+* `extractVersionWeight(versionTag: String)`: Asigna pesos enteros jerárquicos (ej: `20020` para v2.0.2, `20010` para v2.0.1, `10680` para r1068).
+* La interfaz ordena los elementos utilizando `compareByDescending { it.versionWeight }`, dividiendo los grupos mediante separadores visuales `HorizontalDivider` y títulos de categoría.
+
+### Paso 7: Motor de Escaneo Híbrido y Permisos de Almacenamiento (v1.1)
+Para garantizar el acceso a archivos de firmware descargados desde navegadores o aplicaciones de mensajería en Android 11+ (API 30+):
+* **Gestión de Permisos Runtime**: Si `Environment.isExternalStorageManager()` es `false`, la aplicación redirige al usuario a `Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION` para otorgar permiso de administración de archivos.
+* **Consulta MediaStore + Fallback ContentResolver**: Explora la base de datos `MediaStore.Files` y realiza la lectura del flujo binario mediante `contentResolver.openInputStream(contentUri)` copiando el archivo a `context.filesDir`.
+* **Storage Access Framework (SAF)**: Integración con `ActivityResultContracts.GetContent()` permitiendo la importación directa mediante el explorador nativo de Android.

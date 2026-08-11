@@ -63,7 +63,11 @@ data class FlasherUiState(
     val useSftp: Boolean = true,
     val sftpUsername: String = "innovex",
     val sftpPassword: String = "",
-    val sftpFolderPath: String = "/home/innovex"
+    val sftpFolderPath: String = "/home/innovex",
+
+    // Phone Storage Scan state
+    val isScanningStorage: Boolean = false,
+    val scanFeedbackMessage: String? = null
 )
 
 fun extractVersion(filename: String): String {
@@ -188,6 +192,59 @@ class MainScreenViewModel(private val repository: DataRepository) : ViewModel() 
                     localFirmwares = sortedList,
                     selectedLocalFirmware = sortedList.firstOrNull() ?: it.selectedLocalFirmware
                 )
+            }
+        }
+    }
+
+    fun scanPhoneStorage(context: Context) {
+        _uiState.update { it.copy(isScanningStorage = true, scanFeedbackMessage = "Explorando almacenamiento del teléfono...") }
+        viewModelScope.launch {
+            try {
+                val count = repository.scanPhoneStorageForFirmwares(context)
+                val localList = repository.getLocalFirmwares(context)
+                val sortedList = localList.sortedWith(compareBy<LocalFirmware, String>(versionComparator) { extractVersion(it.name) }.thenBy { it.name })
+                _uiState.update {
+                    it.copy(
+                        isScanningStorage = false,
+                        localFirmwares = sortedList,
+                        selectedLocalFirmware = sortedList.firstOrNull() ?: it.selectedLocalFirmware,
+                        scanFeedbackMessage = if (count > 0) "✅ Se encontraron $count firmwares nuevos en el teléfono." else "ℹ️ Escaneo finalizado. No se hallaron firmwares nuevos."
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        isScanningStorage = false,
+                        scanFeedbackMessage = "❌ Error en el escaneo: ${e.message}"
+                    )
+                }
+            }
+        }
+    }
+
+    fun importFirmwareFromUri(context: Context, uri: android.net.Uri) {
+        _uiState.update { it.copy(isScanningStorage = true, scanFeedbackMessage = "Importando firmware seleccionado...") }
+        viewModelScope.launch {
+            try {
+                val importedFile = repository.importFirmwareFromUri(context, uri)
+                val localList = repository.getLocalFirmwares(context)
+                val sortedList = localList.sortedWith(compareBy<LocalFirmware, String>(versionComparator) { extractVersion(it.name) }.thenBy { it.name })
+                val newFirmware = sortedList.find { it.file.name == importedFile.name } ?: sortedList.firstOrNull()
+                _uiState.update {
+                    it.copy(
+                        isScanningStorage = false,
+                        localFirmwares = sortedList,
+                        selectedLocalFirmware = newFirmware,
+                        scanFeedbackMessage = "✅ Firmware '${importedFile.name}' incorporado correctamente."
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        isScanningStorage = false,
+                        scanFeedbackMessage = "❌ Error importando archivo: ${e.message}"
+                    )
+                }
             }
         }
     }
