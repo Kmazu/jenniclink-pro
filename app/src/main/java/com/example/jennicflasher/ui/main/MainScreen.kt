@@ -91,19 +91,6 @@ fun MainScreen(
                     fontWeight = FontWeight.Bold,
                     color = Color.White
                 )
-                Spacer(modifier = Modifier.width(8.dp))
-                Surface(
-                    color = Color(0xFF6366F1),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Text(
-                        text = "v1.1",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                    )
-                }
             }
 
             // Tabs Selector
@@ -354,57 +341,12 @@ fun FlasherLayout(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Phone Storage Scan Header & Button
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Firmware Local (.bin):",
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-
-                Button(
-                    onClick = { viewModel.scanPhoneStorage(context) },
-                    enabled = !uiState.isScanningStorage,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8B5CF6)),
-                    shape = RoundedCornerShape(10.dp),
-                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
-                ) {
-                    if (uiState.isScanningStorage) {
-                        CircularProgressIndicator(modifier = Modifier.size(14.dp), color = Color.White, strokeWidth = 2.dp)
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Escaneando...", fontSize = 12.sp)
-                    } else {
-                        Text("🔍 Escanear Teléfono", fontSize = 12.sp)
-                    }
-                }
-            }
-
-            if (uiState.scanFeedbackMessage != null) {
-                Surface(
-                    color = Color(0x336366F1),
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
-                ) {
-                    Text(
-                        text = uiState.scanFeedbackMessage!!,
-                        color = Color(0xFFA5B4FC),
-                        fontSize = 12.sp,
-                        modifier = Modifier.padding(8.dp)
-                    )
-                }
-            }
-
             // Local Firmware Dropdown
             Box(modifier = Modifier.fillMaxWidth()) {
                 var expanded by remember { mutableStateOf(false) }
                 OutlinedBox(
-                    label = "Seleccionar Firmware",
-                    value = uiState.selectedLocalFirmware?.name ?: "Sincroniza o escanea un firmware",
+                    label = "Firmware local (.bin)",
+                    value = uiState.selectedLocalFirmware?.name ?: "Sincroniza y descarga un firmware",
                     onClick = { expanded = true }
                 )
                 DropdownMenu(
